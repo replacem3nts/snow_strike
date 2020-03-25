@@ -8,6 +8,5 @@ interface.user = user_instance
 
 interface.main_menu
 
-
-puts "hello world"
+puts "May the pow be with you!!"
 
