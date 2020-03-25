@@ -22,12 +22,7 @@ class User < ActiveRecord::Base
             key(:hometown).ask("What's your hometown?", required: true)
             key(:age).ask('How old are you?', required: true)
         end
-        create(
-            username: user_details[:username], 
-            skier_type: user_details[:skier_type], 
-            hometown: user_details[:hometown], 
-            age: user_details[:age]
-            )
+        create(user_details)
     end
 
 # Populates mountains for the dashboard from favorites + remaining best to equal 5 total 
@@ -40,7 +35,7 @@ class User < ActiveRecord::Base
 
 # Trip menu functions below
     def display_trips
-        trips.all.each {|trip| puts "#{trip.name} from #{trip.start_date} until #{trip.end_date} at #{trip.name}"}
+        trips.all.each {|trip| puts "#{trip.name} from #{trip.start_date} until #{trip.end_date} at #{trip.mountain.name}"}
     end
 
     def list_of_trips
@@ -55,16 +50,42 @@ class User < ActiveRecord::Base
             key(:end_date).ask("When will you come back?", required: true)
         end
         puts "Okay, let's find a mountain to go to!"
-        trip_mtn = mtn_search
-        create_trip(
-            trip_details[:name], 
-            trip_details[:start_date], 
-            trip_details[:end_date],
-            trip_mtn
-        )
+        trip_details[:mountain_id] = mtn_search.id
+        create_trip(trip_details)
+    end
+
+    def edit_mtn(array)
+        array.pop
+        puts "Okay, let's choose a new mountain!"
+        {:mountain_id => mtn_search.id}
+    end
+
+
+    def detail_edit_prompt(detail)
+        query_d = detail.to_s.gsub("_"," ")
+        TTY::Prompt.new.ask("What would you like your new #{query_d} to be?")
     end
 
     def edit_trip
+        prompt = TTY::Prompt.new
+        trip_to_edit = prompt.select("Which trip would you like to change?", list_of_trips)
+
+        details = {
+            "Name"=>:name,
+            "Start Date"=>:start_date,
+            "End Date"=>:end_date,
+            "Mountain"=>:mountain}
+
+        details_to_edit = prompt.multi_select("Which parts of the trip would you like to change?", details)
+        new_mtn = edit_mtn(details_to_edit) if details_to_edit.include?(:mountain) 
+
+        new_trip_details = {}
+        details_to_edit.each do |detail|
+            new_trip_details[detail] = detail_edit_prompt(detail)
+        end
+
+        new_trip_details.merge!(new_mtn)
+        update_trip(trip_to_edit, new_trip_details)
     end
 
     def delete_trip
@@ -86,9 +107,8 @@ def add_favorite
 end
 
 def remove_favorite
-    prompt = TTY::Prompt.new
     fav_list = self.favorites.map {|favorite| {favorite.mountain.name => favorite.id} }
-    faves_to_remove = prompt.multi_select("Which mountain would you like to remove?", fav_list)
+    faves_to_remove = TTY::Prompt.new.multi_select("Which mountain would you like to remove?", fav_list)
     destroy_array_of_faves(faves_to_remove)
 end
 
@@ -97,7 +117,7 @@ end
         prompt = TTY::Prompt.new
         new_name = prompt.ask("What do you want to change your username to?")
             
-        !User.find_username(new_name) ? self.update(username: new_name) : (puts "Sorry that username is taken.")
+        !find_username(new_name) ? self.update(username: new_name) : (puts "Sorry that username is taken.")
     end
 
     def edit_hometown
@@ -135,8 +155,13 @@ end
         Trip.destroy(trip_id)
     end
 
-    def create_trip(name, start, finish, mountain)
-        Trip.create(name: name, start_date: start, end_date: finish, mountain_id: mountain.id, user_id: self.id)
+    def update_trip(id_of_trip_to_edit, new_trip_details)
+        Trip.find(id_of_trip_to_edit).update(new_trip_details)
+    end
+
+    def create_trip(trip_details)
+        trip_details[:user_id] = self.id
+        Trip.create(trip_details)
     end
 end
 

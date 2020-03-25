@@ -3,12 +3,12 @@ class Mountain < ActiveRecord::Base
     has_many :trips
 
     def self.search_method
-        TTY::Prompt.new.select("How would you like to search?") do |crit|
-            crit.enum '.'
+        TTY::Prompt.new.select("How would you like to search?") do |criteria|
+            criteria.enum '.'
 
-            crit.choice "Name", :name
-            crit.choice "State", :state
-            crit.choice "Zip Code", :zip_code
+            criteria.choice "Name", :name
+            criteria.choice "State", :state
+            criteria.choice "Zip Code", :zip_code
         end
     end
 
