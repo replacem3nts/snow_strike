@@ -39,7 +39,43 @@ class Interface
         nav_to
     end
 
+    def find_mtns
+        search_crit = prompt.select("How would you like to search?") do |crit|
+            crit.enum '.'
+
+            crit.choice "Name"
+            crit.choice "State"
+            crit.choice "Zip Code"
+        end
+    end
+
     def my_trips
         self.user.trips.map {|trip| puts trip.name}
     end
+
+    def my_favorites
+        search_crit = prompt.select("How would you like to search?") do |crit|
+            crit.enum '.'
+
+            crit.choice "Add favorite"
+            crit.choice "Remove favorite"
+            crit.choice "View favorite"
+            crit.choice "Main menu"
+            crit.choice "Quit"
+        end
+    end
+
+    def account_settings
+        search_crit = prompt.select("What would you like to do?") do |crit|
+            crit.enum '.'
+
+            crit.choice "Edit username"
+            crit.choice "Edit hometown"
+            crit.choice "Edit age"
+            crit.choice "Delete account"
+            crit.choice "Main menu"
+            crit.choice "Quit"
+        end
+    end
+
 end

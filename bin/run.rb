@@ -10,13 +10,13 @@ go_to = interface.main_menu
 
 case go_to
 when 1
-    puts "Find mountain forecast"
+    interface.find_mtns
 when 2
     interface.my_trips
 when 3
-    puts "My favorites"
+    interface.my_favorites
 when 4
-    puts "Account settings"
+    interface.account_settings
 else
     return
 end
