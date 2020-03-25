@@ -30,11 +30,35 @@ class User < ActiveRecord::Base
             )
     end
 
+# Populates mountains for the dashboard from favorites + remaining best to equal 5 total 
     def my_mtn_list
-        fav_mtns = self.mountains
+        fav_mtns = []
+        fav_mtns << self.mountains
         fav_mtns << Mountain.five_by_snow
-        fav_mtns.uniq[0..4]
+        fav_mtns.flatten.uniq[0..4]
     end
+
+# Account settings functions below
+    def edit_username
+        prompt = TTY::Prompt.new
+        new_name = prompt.ask("What do you want to change your username to?")
+            
+        !User.find_username(new_name) ? self.update(username: new_name) : (puts "Sorry that username is taken.")
+    end
+
+    def edit_hometown
+        prompt = TTY::Prompt.new
+        new_home = prompt.ask("What's your new hometown?")
+        self.update(hometown: new_home)
+    end
+
+    def edit_age
+        prompt = TTY::Prompt.new
+        new_age = prompt.ask("How old are you now?")
+        self.update(age: new_age)
+    end
+
+
 end
 
 

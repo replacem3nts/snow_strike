@@ -15,17 +15,11 @@ class Interface
             "Log in",
             "Register"
         ])
-
-        if answer == "Log in"
-            User.log_someone_in
-        elsif answer == "Register"
-            User.create_new_user
-        end
+        answer == "Log in" ? User.log_someone_in : User.create_new_user 
     end
 
     def main_menu
-        prompt.say("Hello, welcome to Snow Strike, #{user.username}!", timeout: 1)
-        prompt.say("Let's get started", timeout: 1)
+        prompt.say("Hello, #{user.username}. Let's get started!")
 
         nav_to = prompt.select("Where would you like to go?") do |dest|
             dest.enum '.'
@@ -54,7 +48,7 @@ class Interface
     end
 
     def my_favorites
-        search_crit = prompt.select("How would you like to search?") do |crit|
+        fav_action = prompt.select("How would you like to search?") do |crit|
             crit.enum '.'
 
             crit.choice "Add favorite"
@@ -66,16 +60,32 @@ class Interface
     end
 
     def account_settings
-        search_crit = prompt.select("What would you like to do?") do |crit|
+        account_action = prompt.select("What would you like to do?") do |crit|
             crit.enum '.'
 
-            crit.choice "Edit username"
-            crit.choice "Edit hometown"
-            crit.choice "Edit age"
-            crit.choice "Delete account"
-            crit.choice "Main menu"
-            crit.choice "Quit"
+            crit.choice "Edit username", 1
+            crit.choice "Edit hometown", 2
+            crit.choice "Edit age", 3
+            crit.choice "Delete account", 4
+            crit.choice "Main menu", 5
+            crit.choice "Quit", 5
         end
+
+        case account_action
+        when 1
+            self.user.edit_username
+        when 2
+            self.user.edit_hometown
+        when 3
+            self.user.edit_age
+        when 4
+            puts "Delete account tbd"
+        when 5
+            main_menu
+        else
+            return
+        end
+
     end
 
 end
