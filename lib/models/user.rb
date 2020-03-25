@@ -71,11 +71,10 @@ class User < ActiveRecord::Base
     end
 
     def remove_favorite
-        fav_list = self.mountains.map(&:name)
         prompt = TTY::Prompt.new
-        mtn_to_remove = prompt.select("Which mountain would you like to remove?", fav_list)
-        mtn_inst = Mountain.find_by(name: mtn_to_remove)
-        Favorite.find_by(user_id: self.id, mountain_id: mtn_inst.id).destroy
+        fav_list = self.favorites.map {|favorite| {favorite.mountain.name => favorite.id} }
+        fav_to_remove = prompt.multi_select("Which mountain would you like to remove?", fav_list)
+        fav_to_remove.each {|fav| Favorite.find(fav).destroy}
     end
 end
 
