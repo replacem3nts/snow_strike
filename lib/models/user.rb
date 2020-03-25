@@ -58,12 +58,26 @@ class User < ActiveRecord::Base
         self.update(age: new_age)
     end
 
+# Favorites menu functions below
+    def add_favorite
+        if self.favorites.count > 4
+            puts "Sorry, you already have 5 favorites, please remove one first."
+            remove_favorite
+            puts "Okay, let's add that mountain!"
+        end
 
+        new_fav = Mountain.find_mtn
+        Favorite.create(user_id: self.id, mountain_id: new_fav.id)
+    end
+
+    def remove_favorite
+        fav_list = self.mountains.map(&:name)
+        prompt = TTY::Prompt.new
+        mtn_to_remove = prompt.select("Which mountain would you like to remove?", fav_list)
+        mtn_inst = Mountain.find_by(name: mtn_to_remove)
+        Favorite.find_by(user_id: self.id, mountain_id: mtn_inst.id).destroy
+    end
 end
 
 
 
-# do |q|
-#                 q.validate(!User.find_username(:username))
-#                 q.messages[:valid?] = "Sorry, someone has that username already"
-#             end

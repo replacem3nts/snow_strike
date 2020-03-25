@@ -7,7 +7,9 @@ class Interface
     end
 
     def welcome
-        puts ":snowflake: Welcome to Snow Strike! :snowflake:"
+        File.readlines("./lib/models/ascii_art.txt") do |line|
+            prints line
+        end
     end
 
     def choose_login_or_register
@@ -33,16 +35,6 @@ class Interface
         nav_to
     end
 
-    def find_mtns
-        search_crit = prompt.select("How would you like to search?") do |crit|
-            crit.enum '.'
-
-            crit.choice "Name"
-            crit.choice "State"
-            crit.choice "Zip Code"
-        end
-    end
-
     def my_trips
         self.user.trips.map {|trip| puts trip.name}
     end
@@ -51,12 +43,23 @@ class Interface
         fav_action = prompt.select("How would you like to search?") do |crit|
             crit.enum '.'
 
-            crit.choice "Add favorite"
-            crit.choice "Remove favorite"
-            crit.choice "View favorite"
-            crit.choice "Main menu"
-            crit.choice "Quit"
+            crit.choice "Add favorite", 1
+            crit.choice "Remove favorite", 2
+            crit.choice "Main menu", 3
+            crit.choice "Quit", 4
         end
+
+        case fav_action
+        when 1
+            self.user.add_favorite
+        when 2
+            self.user.remove_favorite
+        when 3
+            main_menu
+        else
+            return
+        end
+
     end
 
     def account_settings
