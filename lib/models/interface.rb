@@ -31,14 +31,24 @@ class Interface
         sleep(2)
     end
 
-# Main menu methods
+# Table setup an settings below    
+    def create_display_table(title, headings, rows)
+        Terminal::Table.new :title=> title, :headings => headings, :rows => rows
+    end
+
+    def default_table_style
+        {:alignment => :center, :padding_left => 2, :border_x => "=", :border_i => "x"}
+    end
+
+
+# Main menu methods below
     def main_menu
         system 'clear'
         main_dashboard_table
         prompt.select(menu_message) do |menu|
             menu.enum '.'
 
-            menu.choice "Find mountain forecast", -> {find_mtn}
+            menu.choice "Find mountain forecast", -> {mtn_forecast}
             menu.choice "Go to my trips", -> {my_trips}
             menu.choice "Go to favorites", -> {my_favorites}
             menu.choice "Go to account settings", -> {account_settings} 
@@ -47,12 +57,10 @@ class Interface
     end
 
     def main_dashboard_table
-        rows = mtn_list.map do |mtn| 
-            [mtn.name, mtn.state, mtn.hist_snow_per_year]
-        end
+        rows = mtn_list.map {|mtn| [mtn.name, mtn.state, mtn.hist_snow_per_year]}
         headings = ["Mountain", "State", "Hist. Snow / Yr"]
-        table = Terminal::Table.new :title=> "Main Menu", :headings => headings, :rows => rows
-        table.style = {:alignment => :center, :padding_left => 2, :border_x => "=", :border_i => "x"}
+        table = create_display_table("Main Menu", headings, rows)
+        table.style = default_table_style
         table.align_column(0, :left)
         puts table
     end
@@ -62,10 +70,33 @@ class Interface
     end
 
 # Find mountain forecast below
+    def mtn_forecast
+        mtn = find_mtn
+        system 'clear'
+        mtn_forecast_dashboard(mtn)
+        prompt.select(menu_message) do |menu|
+            menu.enum '.'
+
+            menu.choice "Create a new trip here", -> {puts "new_mtn_trip"}
+            menu.choice "Add to favorites", -> {puts "add_mtn_to_favorites"}
+            menu.choice "Check another mountain", -> {mtn_forecast}
+            menu.choice "Main menu", -> {main_menu}
+            menu.choice "Quit", -> {return}
+        end
+    end
+
+    def mtn_forecast_dashboard(mtn)
+        rows = [[mtn.name, mtn.state, mtn.hist_snow_per_year]]
+        headings = ["Mountain", "State", "Hist. Snow / Yr"]
+        table = create_display_table("#{mtn.name} Forecast", headings, rows)
+        table.style = default_table_style
+        table.align_column(0, :left)
+        puts table
+    end
+
     def find_mtn
         system 'clear'
         Mountain.execute_search
-        main_menu
     end
 
 # Trips menu methods
@@ -118,12 +149,10 @@ class Interface
     end
 
     def favorites_dashboard
-        rows = user.mountains.map do |mtn| 
-            [mtn.name, mtn.state, mtn.hist_snow_per_year]
-        end
+        rows = user.mountains.map {|mtn| [mtn.name, mtn.state, mtn.hist_snow_per_year]}
         headings = ["Mountain", "State", "Hist. Snow / Yr"]
-        table = Terminal::Table.new :title=> "My Favorites", :headings => headings, :rows => rows
-        table.style = {:alignment => :center, :padding_left => 2, :border_x => "=", :border_i => "x"}
+        table = create_display_table("My Favorites", headings, rows)
+        table.style = default_table_style
         table.align_column(0, :left)
         puts table
     end
@@ -186,7 +215,7 @@ class Interface
 
     def delete_account
         response = TTY::Prompt.new.yes?("Are you sure you want to delete your account?")
-        if response = "y"
+        if response == "y"
             user_destroy
             system 'clear'
             puts "Sorry to see you go!"

@@ -37,9 +37,7 @@ class User < ActiveRecord::Base
 
 # Trip menu functions below
     def trip_dashboard_table
-        rows = trips.all.map do |trip|
-            [trip.name, trip.start_date, trip.end_date, trip.mountain.name]
-        end
+        rows = trips.all.map {|trip| [trip.name, trip.start_date, trip.end_date, trip.mountain.name]}
         headings = ["Trip", "Start Date", "End Date", "Mountain"]
 
         table = Terminal::Table.new :title=>"My Trips",:headings => headings, :rows => rows
@@ -80,19 +78,13 @@ class User < ActiveRecord::Base
         prompt = TTY::Prompt.new
         trip_to_edit = prompt.select("Which trip would you like to change?", list_of_trips)
 
-        details = {
-            "Name"=>:name,
-            "Start Date"=>:start_date,
-            "End Date"=>:end_date,
-            "Mountain"=>:mountain}
-
+        details = {"Name"=>:name, "Start Date"=>:start_date, "End Date"=>:end_date, "Mountain"=>:mountain}
         details_to_edit = prompt.multi_select("Which parts of the trip would you like to change?", details)
-        new_mtn = edit_mtn(details_to_edit) if details_to_edit.include?(:mountain) 
+        
+        new_mtn = edit_mtn(details_to_edit) if details_to_edit.include?(:mountain)
 
         new_trip_details = {}
-        details_to_edit.each do |detail|
-            new_trip_details[detail] = detail_edit_prompt(detail)
-        end
+        details_to_edit.each {|detail| new_trip_details[detail] = detail_edit_prompt(detail)}
 
         new_trip_details.merge!(new_mtn) if new_mtn
         update_trip(trip_to_edit, new_trip_details)
@@ -124,24 +116,19 @@ end
 
 # Account settings functions below
     def edit_username
-        prompt = TTY::Prompt.new
-        new_name = prompt.ask("What do you want to change your username to?")
-            
-        !find_username(new_name) ? self.update(username: new_name) : (puts "Sorry that username is taken.")
+        new_name = TTY::Prompt.new.ask("What do you want to change your username to?")
+        !User.find_username(new_name) ? self.update(username: new_name) : (puts "Sorry that username is taken.")
     end
 
     def edit_hometown
-        prompt = TTY::Prompt.new
-        new_home = prompt.ask("What's your new hometown?")
+        new_home = TTY::Prompt.new.ask("What's your new hometown?")
         self.update(hometown: new_home)
     end
 
     def edit_age
-        prompt = TTY::Prompt.new
-        new_age = prompt.ask("How old are you now?")
+        new_age = TTY::Prompt.new.ask("How old are you now?")
         self.update(age: new_age)
     end
-
     
     private
 
