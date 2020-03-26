@@ -4,17 +4,19 @@ class User < ActiveRecord::Base
     has_many :mountains, through: :favorites
 
     def self.find_username(username)
-        find_by(username: username)
+        find_by username: username
     end
 
     def self.log_someone_in
+        system 'clear'
         prompt = TTY::Prompt.new
         username = prompt.ask("Enter your username:")
-        found_username = find_by(username: username)
+        found_username = find_username(username)
         found_username ? (return found_username) : (puts "Sorry, that username doesn't exist!")
     end
 
     def self.create_new_user
+        system 'clear'
         prompt = TTY::Prompt.new
         user_details = prompt.collect do
             key(:username).ask("What username would you like?", required: true)
@@ -25,7 +27,7 @@ class User < ActiveRecord::Base
         create(user_details)
     end
 
-# Populates mountains for the dashboard from favorites + remaining best to equal 5 total 
+# Populates mountains for the main menu dashboard from favorites + remaining best to equal 5 total 
     def my_mtn_list
         fav_mtns = []
         fav_mtns << self.mountains
@@ -34,8 +36,16 @@ class User < ActiveRecord::Base
     end
 
 # Trip menu functions below
-    def display_trips
-        trips.all.each {|trip| puts "#{trip.name} from #{trip.start_date} until #{trip.end_date} at #{trip.mountain.name}"}
+    def trip_dashboard_table
+        rows = trips.all.map do |trip|
+            [trip.name, trip.start_date, trip.end_date, trip.mountain.name]
+        end
+        headings = ["Trip", "Start Date", "End Date", "Mountain"]
+
+        table = Terminal::Table.new :title=>"My Trips",:headings => headings, :rows => rows
+        table.style = {:alignment => :center, :padding_left => 2, :border_x => "=", :border_i => "x"}
+        table.align_column(0, :left)
+        puts table
     end
 
     def list_of_trips
@@ -84,7 +94,7 @@ class User < ActiveRecord::Base
             new_trip_details[detail] = detail_edit_prompt(detail)
         end
 
-        new_trip_details.merge!(new_mtn)
+        new_trip_details.merge!(new_mtn) if new_mtn
         update_trip(trip_to_edit, new_trip_details)
     end
 
@@ -132,7 +142,12 @@ end
         self.update(age: new_age)
     end
 
+    
     private
+
+    def self.delete_account(account)
+        self.destroy(account.id)
+    end
 
 #Links to other classes
     def five_mtns_by_snow
