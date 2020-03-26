@@ -11,19 +11,27 @@ class User < ActiveRecord::Base
         system 'clear'
         prompt = TTY::Prompt.new
         username = prompt.ask("Enter your username:")
-        found_username = find_username(username)
-        found_username ? (return found_username) : (puts "Sorry, that username doesn't exist!")
+        until find_username(username)
+            puts "Sorry, that username doesn't exist!"
+            username = prompt.ask("Enter your username:")
+        end
+        find_username(username) 
     end
 
     def self.create_new_user
         system 'clear'
         prompt = TTY::Prompt.new
         user_details = prompt.collect do
-            key(:username).ask("What username would you like?", required: true)
             key(:skier_type).ask('Do you ski, snowboard, or both?', required: true)
             key(:hometown).ask("What's your hometown?", required: true)
             key(:age).ask('How old are you?', required: true)
         end
+        username = prompt.ask("What would you like your username to be?")
+        until !find_username(username)
+            (puts "Sorry, that username is taken")
+            username = prompt.ask("What would you like your username to be?")
+        end
+        user_details[:username] = username
         create(user_details)
     end
 
@@ -46,19 +54,22 @@ class User < ActiveRecord::Base
         puts table
     end
 
-    def list_of_trips
-        trips.map {|trip| {trip.name => trip.id}}
-    end
-
-    def new_trip
-        prompt = TTY::Prompt.new
-        trip_details = prompt.collect do
+    def collect_trip_details
+        TTY::Prompt.new.collect do
             key(:name).ask("What would you like to call this trip?", required: true)
             key(:start_date).ask('When would you like to go?', required: true)
             key(:end_date).ask("When will you come back?", required: true)
         end
-        puts "Okay, let's find a mountain to go to!"
-        trip_details[:mountain_id] = mtn_search.id
+    end
+
+    def new_trip(mtn=nil)
+        trip_details = collect_trip_details
+        if !mtn
+            puts "Okay, let's find a mountain to go to!"
+            trip_details[:mountain_id] = mtn_search.id
+        else
+            trip_details[:mountain_id] = mtn.id
+        end
         create_trip(trip_details)
     end
 
@@ -90,6 +101,10 @@ class User < ActiveRecord::Base
         update_trip(trip_to_edit, new_trip_details)
     end
 
+    def list_of_trips
+        trips.map {|trip| {trip.name => trip.id}}
+    end
+
     def delete_trip
         trip_to_remove = TTY::Prompt.new.select("Which trip would you like to remove?", list_of_trips)
         destroy_trip(trip_to_remove)
@@ -97,14 +112,14 @@ class User < ActiveRecord::Base
 
 
 # Favorites menu functions below
-def add_favorite
+def add_favorite(mtn=nil)
     if self.favorites.count > 4
         puts "Sorry, you already have 5 favorites, please remove one first."
         remove_favorite
         puts "Okay, let's add that mountain!"
     end
 
-    new_fav = mtn_search
+    !mtn ? new_fav = mtn_search : new_fav = mtn 
     self.mountains.include?(new_fav) ? (puts "Sorry that's already a favorite") : create_fav(new_fav)
 end
 

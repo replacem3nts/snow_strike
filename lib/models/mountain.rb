@@ -6,9 +6,9 @@ class Mountain < ActiveRecord::Base
         TTY::Prompt.new.select("How would you like to search?") do |criteria|
             criteria.enum '.'
 
-            criteria.choice "Name", :name
-            criteria.choice "State", :state
-            criteria.choice "Zip Code", :zip_code
+            criteria.choice "By name", :name
+            criteria.choice "By state", :state
+            criteria.choice "By zip Code", :zip_code
         end
     end
 

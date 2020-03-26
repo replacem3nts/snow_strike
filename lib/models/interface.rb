@@ -11,12 +11,11 @@ class Interface
     end
 
     def welcome
-        File.readlines("./lib/models/ascii_art.txt") do |line|
-            prints line
-        end
+        Art.welcome_image
+        sleep(1)
     end
 
-    def choose_login_or_register
+    def login_or_reg
         answer = prompt.select("Would you like to log in or register as a new user?") do |menu|
             menu.choice "Log in", -> {User.log_someone_in}
             menu.choice "Register", -> {User.create_new_user}
@@ -31,7 +30,7 @@ class Interface
         sleep(2)
     end
 
-# Table setup an settings below    
+# Default table setup and settings below    
     def create_display_table(title, headings, rows)
         Terminal::Table.new :title=> title, :headings => headings, :rows => rows
     end
@@ -77,8 +76,8 @@ class Interface
         prompt.select(menu_message) do |menu|
             menu.enum '.'
 
-            menu.choice "Create a new trip here", -> {puts "new_mtn_trip"}
-            menu.choice "Add to favorites", -> {puts "add_mtn_to_favorites"}
+            menu.choice "Create a new trip here", -> {new_mtn_trip(mtn)}
+            menu.choice "Add to favorites", -> {new_mtn_favorite(mtn)}
             menu.choice "Check another mountain", -> {mtn_forecast}
             menu.choice "Main menu", -> {main_menu}
             menu.choice "Quit", -> {return}
@@ -92,6 +91,16 @@ class Interface
         table.style = default_table_style
         table.align_column(0, :left)
         puts table
+    end
+
+    def new_mtn_trip(mtn)
+        user.new_trip(mtn)
+        main_menu
+    end
+
+    def new_mtn_favorite(mtn)
+        user.add_favorite(mtn)
+        main_menu
     end
 
     def find_mtn
@@ -215,7 +224,8 @@ class Interface
 
     def delete_account
         response = TTY::Prompt.new.yes?("Are you sure you want to delete your account?")
-        if response == "y"
+        binding.pry
+        if response
             user_destroy
             system 'clear'
             puts "Sorry to see you go!"
