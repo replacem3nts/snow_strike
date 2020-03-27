@@ -11,14 +11,13 @@ class DataQuery
 
     def self.get_total_snow(zip_code)
         total_snow = []
-        curr_yr_dates.each do |date_pair| end
-            url = build_historical_query(zip_code, date_pair[0], date_pair[1])
+        curr_yr_dates.each do |date_pair|
+            url = build_historical_query(zip_code, date_pair.first, date_pair.last)
             historical = get_and_parse(url)
-            total_snow << convert_forecast_to_array(historical, "historical")
+            total_snow << convert_result_to_array(historical, "historical")
         end
         total_snow.flatten.sum
     end
-
 
     def self.build_historical_query(zip_code, start_date, end_date)
         "http://api.weatherstack.com/historical?access_key=9a215f3a399fae80814d763e208814c0&query=#{zip_code}&historical_date_start=#{start_date}&historical_date_end=#{end_date}&units=f"
@@ -37,7 +36,7 @@ class DataQuery
     def self.get_forecast(zip_code, days)
         url = build_forecast_query(zip_code, days)
         forecast = get_and_parse(url)
-        convert_forecast_to_array(forecast, "forecast")
+        convert_result_to_array(forecast, "forecast")
     end
 
     def self.get_and_parse(url)

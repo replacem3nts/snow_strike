@@ -38,7 +38,12 @@ class Mountain < ActiveRecord::Base
         end
     end
 
+    def display_array
+        [self.name, forecast.snow_this_yr, forecast.snow_next_three_days, forecast.snow_next_seven_days]
+    end
+
     def self.five_by_snow
         order(hist_snow_per_year: :desc).limit(5)
     end
+
 end
