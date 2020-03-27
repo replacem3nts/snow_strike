@@ -10,24 +10,34 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_03_24_001431) do
+ActiveRecord::Schema.define(version: 2020_03_27_023228) do
 
   create_table "favorites", force: :cascade do |t|
     t.integer "user_id"
     t.integer "mountain_id"
   end
 
+  create_table "forecasts", force: :cascade do |t|
+    t.integer "mountain_id"
+    t.integer "hist_snow"
+    t.integer "snow_this_yr"
+    t.integer "snow_next_three_days"
+    t.integer "snow_next_seven_days"
+    t.date "year_start"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
   create_table "mountains", force: :cascade do |t|
     t.string "name"
     t.string "state"
-    t.integer "zip_code"
-    t.integer "hist_snow_per_year"
+    t.string "zip_code"
   end
 
   create_table "trips", force: :cascade do |t|
     t.string "name"
-    t.datetime "start_date"
-    t.datetime "end_date"
+    t.date "start_date"
+    t.date "end_date"
     t.integer "mountain_id"
     t.integer "user_id"
   end

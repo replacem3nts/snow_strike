@@ -3,34 +3,40 @@ class User < ActiveRecord::Base
     has_many :trips
     has_many :mountains, through: :favorites
 
+    @@prompt = TTY::Prompt.new
+
+
     def self.find_username(username)
         find_by username: username
     end
 
-    def self.log_someone_in
-        system 'clear'
-        prompt = TTY::Prompt.new
-        username = prompt.ask("Enter your username:")
-        until find_username(username)
-            puts "Sorry, that username doesn't exist!"
-            username = prompt.ask("Enter your username:")
+    def self.username_check(check_type)
+        #check_type var should be 0|1; (0 = log_user_in), (1 = register_user)
+        msgs = [["Enter your username:", "Sorry, that username doesn't exist.", true],
+            ["What would you like your username to be?", "Sorry, that username is taken!", false]]
+        username = @@prompt.ask("#{msgs[check_type].first}")
+        if !!find_username(username) == msgs[check_type].last 
+            username 
+        else 
+            puts "#{msgs[check_type].second}"
+            username_check(check_type)
         end
-        find_username(username) 
     end
 
-    def self.create_new_user
+    def self.log_user_in
         system 'clear'
-        prompt = TTY::Prompt.new
-        user_details = prompt.collect do
+        username = username_check(0)
+        self.find_username(username)
+    end
+
+    def self.register_user
+        system 'clear'
+        user_details = @@prompt.collect do
             key(:skier_type).ask('Do you ski, snowboard, or both?', required: true)
             key(:hometown).ask("What's your hometown?", required: true)
             key(:age).ask('How old are you?', required: true)
         end
-        username = prompt.ask("What would you like your username to be?")
-        until !find_username(username)
-            (puts "Sorry, that username is taken")
-            username = prompt.ask("What would you like your username to be?")
-        end
+        username = username_check(1)
         user_details[:username] = username
         create(user_details)
     end
@@ -45,7 +51,7 @@ class User < ActiveRecord::Base
 
 # Trip menu functions below
     def trip_dashboard_table
-        rows = trips.all.map {|trip| [trip.name, trip.start_date, trip.end_date, trip.mountain.name]}
+        rows = trips.all.reload.map {|trip| [trip.name, trip.start_date, trip.end_date, trip.mountain.name]}
         headings = ["Trip", "Start Date", "End Date", "Mountain"]
 
         table = Terminal::Table.new :title=>"My Trips",:headings => headings, :rows => rows
@@ -55,7 +61,7 @@ class User < ActiveRecord::Base
     end
 
     def collect_trip_details
-        TTY::Prompt.new.collect do
+        @@prompt.collect do
             key(:name).ask("What would you like to call this trip?", required: true)
             key(:start_date).ask('When would you like to go?', required: true)
             key(:end_date).ask("When will you come back?", required: true)
@@ -82,12 +88,11 @@ class User < ActiveRecord::Base
 
     def detail_edit_prompt(detail)
         query_d = detail.to_s.gsub("_"," ")
-        TTY::Prompt.new.ask("What would you like your new #{query_d} to be?")
+        @@prompt.ask("What would you like your new #{query_d} to be?")
     end
 
     def edit_trip
-        prompt = TTY::Prompt.new
-        trip_to_edit = prompt.select("Which trip would you like to change?", list_of_trips)
+        trip_to_edit = @@prompt.select("Which trip would you like to change?", list_of_trips)
 
         details = {"Name"=>:name, "Start Date"=>:start_date, "End Date"=>:end_date, "Mountain"=>:mountain}
         details_to_edit = prompt.multi_select("Which parts of the trip would you like to change?", details)
@@ -106,7 +111,7 @@ class User < ActiveRecord::Base
     end
 
     def delete_trip
-        trip_to_remove = TTY::Prompt.new.select("Which trip would you like to remove?", list_of_trips)
+        trip_to_remove = @@prompt.select("Which trip would you like to remove?", list_of_trips)
         destroy_trip(trip_to_remove)
     end
 
@@ -125,23 +130,28 @@ end
 
 def remove_favorite
     fav_list = self.favorites.map {|favorite| {favorite.mountain.name => favorite.id} }
-    faves_to_remove = TTY::Prompt.new.multi_select("Which mountain would you like to remove?", fav_list)
+    faves_to_remove = @@prompt.multi_select("Which mountain would you like to remove?", fav_list)
     destroy_array_of_faves(faves_to_remove)
 end
 
 # Account settings functions below
     def edit_username
-        new_name = TTY::Prompt.new.ask("What do you want to change your username to?")
-        !User.find_username(new_name) ? self.update(username: new_name) : (puts "Sorry that username is taken.")
+        new_name = @@prompt.ask("What do you want to change your username to?")
+        
+        until !User.find_username(new_name)
+            (puts "Sorry that username is taken.")
+            new_name = @@prompt.ask("What do you want to change your username to?")
+        end
+        self.update(username: new_name)
     end
 
     def edit_hometown
-        new_home = TTY::Prompt.new.ask("What's your new hometown?")
+        new_home = @@prompt.ask("What's your new hometown?")
         self.update(hometown: new_home)
     end
 
     def edit_age
-        new_age = TTY::Prompt.new.ask("How old are you now?")
+        new_age = @@prompt.ask("How old are you now?")
         self.update(age: new_age)
     end
     

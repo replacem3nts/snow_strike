@@ -2,8 +2,7 @@ class Interface
     attr_accessor :prompt, :user
 
     def initialize
-        @prompt = TTY::Prompt.new
-        
+        @prompt = TTY::Prompt.new   
     end
 
     def menu_message
@@ -17,8 +16,8 @@ class Interface
 
     def login_or_reg
         answer = prompt.select("Would you like to log in or register as a new user?") do |menu|
-            menu.choice "Log in", -> {User.log_someone_in}
-            menu.choice "Register", -> {User.create_new_user}
+            menu.choice "Log in", -> {User.log_user_in}
+            menu.choice "Register", -> {User.register_user}
         end
     end
 
@@ -56,8 +55,8 @@ class Interface
     end
 
     def main_dashboard_table
-        rows = mtn_list.map {|mtn| [mtn.name, mtn.state, mtn.hist_snow_per_year]}
-        headings = ["Mountain", "State", "Hist. Snow / Yr"]
+        rows = mtn_list.map {|mtn| [mtn.name, mtn.state]}
+        headings = ["Mountain", "State"]
         table = create_display_table("Main Menu", headings, rows)
         table.style = default_table_style
         table.align_column(0, :left)
@@ -85,8 +84,8 @@ class Interface
     end
 
     def mtn_forecast_dashboard(mtn)
-        rows = [[mtn.name, mtn.state, mtn.hist_snow_per_year]]
-        headings = ["Mountain", "State", "Hist. Snow / Yr"]
+        rows = [[mtn.name, mtn.state]]
+        headings = ["Mountain", "State"]
         table = create_display_table("#{mtn.name} Forecast", headings, rows)
         table.style = default_table_style
         table.align_column(0, :left)
@@ -142,7 +141,6 @@ class Interface
         my_trips
     end
 
-
 # Favorites menu methods
     def my_favorites
         system 'clear'
@@ -158,8 +156,8 @@ class Interface
     end
 
     def favorites_dashboard
-        rows = user.mountains.map {|mtn| [mtn.name, mtn.state, mtn.hist_snow_per_year]}
-        headings = ["Mountain", "State", "Hist. Snow / Yr"]
+        rows = user.mountains.reload.map {|mtn| [mtn.name, mtn.state]}
+        headings = ["Mountain", "State"]
         table = create_display_table("My Favorites", headings, rows)
         table.style = default_table_style
         table.align_column(0, :left)
@@ -176,7 +174,6 @@ class Interface
         user.remove_favorite
         my_favorites
     end
-
 
 # Account settings menu methods
     def account_settings
@@ -200,7 +197,6 @@ class Interface
         title = ["Account Settings"]
         table = Terminal::Table.new :title=>"Account Settings", :headings=>headings, :rows=>rows
         table.style = {:alignment => :center, :padding_left => 2, :border_i => "x", :width => 100}
-
         puts table
     end
 
@@ -223,8 +219,7 @@ class Interface
     end
 
     def delete_account
-        response = TTY::Prompt.new.yes?("Are you sure you want to delete your account?")
-        binding.pry
+        response = prompt.yes?("Are you sure you want to delete your account?")
         if response
             user_destroy
             system 'clear'

@@ -3,8 +3,7 @@ class CreateMountains < ActiveRecord::Migration[5.2]
     create_table :mountains do |t|
       t.string :name
       t.string :state
-      t.integer :zip_code
-      t.integer :hist_snow_per_year
+      t.string :zip_code
     end
   end
 end

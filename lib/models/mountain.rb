@@ -1,9 +1,12 @@
 class Mountain < ActiveRecord::Base
     has_many :favorites
     has_many :trips
+    has_one :forecast
+
+    @@prompt = TTY::Prompt.new
 
     def self.search_method
-        TTY::Prompt.new.select("How would you like to search?") do |criteria|
+        @@prompt.select("How would you like to search?") do |criteria|
             criteria.enum '.'
 
             criteria.choice "By name", :name
@@ -13,20 +16,20 @@ class Mountain < ActiveRecord::Base
     end
 
     def self.get_search
-        TTY::Prompt.new.ask("Please enter search term?")
+        @@prompt.ask("Please enter search term?")
     end
 
     def self.select_from_hash(hash)
-        selection = TTY::Prompt.new.select("Which mountain do you mean?", hash)
+        selection = @@prompt.select("Which mountain do you mean?", hash)
         find(selection)
     end
 
     def self.execute_search
-        result = self.where({search_method=>get_search})
+        result = where({search_method=>get_search})
         choose_mtn = result.map {|mtn| {mtn.name => mtn.id}}
         if choose_mtn.count == 0
             puts "Sorry, that search didn't match any results."
-            TTY::Prompt.new.select("What would you like to do?") do |menu|
+            @@prompt.select("What would you like to do?") do |menu|
                 menu.choice "Try again", -> {execute_search}
                 menu.choice "Go back", -> {return}
             end
