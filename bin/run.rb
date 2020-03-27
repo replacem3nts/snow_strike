@@ -10,7 +10,18 @@ interface.lets_start_msg
 interface.main_menu
 
 system 'clear'
-5.times {puts " "}
-puts "                MAY THE POW BE WITH YOU!!!!!"
-5.times {puts " "}
-
+Art.goodbye_msg_1
+sleep(1.5)
+system 'clear'
+Art.goodbye_msg_2
+sleep(0.75)
+system 'clear'
+Art.goodbye_msg_3
+sleep(0.75)
+system 'clear'
+Art.goodbye_msg_4
+sleep(0.75)
+system 'clear'
+Art.goodbye_msg_5
+sleep(3)
+system 'clear'

@@ -1,15 +1,13 @@
 class Interface
     attr_accessor :prompt, :user
 
+#user authentication & greeting sequence
     def initialize
         @prompt = TTY::Prompt.new   
     end
 
-    def menu_message
-        "What would you like to do?"
-    end
-
     def welcome
+        system 'clear'
         Art.welcome_image
         sleep(1)
     end
@@ -23,13 +21,11 @@ class Interface
 
     def lets_start_msg
         system 'clear'
-        5.times {puts " "}
-        prompt.say("Hello, #{user.username}. Let's get started!")
-        5.times {puts " "}
+        Art.welcome_message(user.username)
         sleep(2)
     end
 
-# Default table setup and settings below    
+# Default table setup and settings
     def create_display_table(title, headings, rows)
         Terminal::Table.new :title=> title, :headings => headings, :rows => rows
     end
@@ -38,8 +34,19 @@ class Interface
         {:alignment => :center, :padding_left => 2, :border_x => "=", :border_i => "x"}
     end
 
+    def default_table_headings
+        Forecast.display_headings
+    end
 
-# Main menu methods below
+    def populate_fcst(fcst)
+        fcst.display_values_array
+    end
+
+    def menu_message
+        "What would you like to do?"
+    end
+
+# Main menu methods
     def main_menu
         system 'clear'
         main_dashboard_table
@@ -55,8 +62,8 @@ class Interface
     end
 
     def main_dashboard_table
-        rows = mtn_list.map {|mtn| [mtn.name, mtn.state]}
-        headings = ["Mountain", "State"]
+        rows = mtn_list.map {|fcst| populate_fcst(fcst)}
+        headings = default_table_headings
         table = create_display_table("Main Menu", headings, rows)
         table.style = default_table_style
         table.align_column(0, :left)
@@ -67,11 +74,12 @@ class Interface
         user.my_mtn_list
     end
 
-# Find mountain forecast below
+# Find mountain forecast
     def mtn_forecast
         mtn = find_mtn
+        fcst = mtn.forecast
         system 'clear'
-        mtn_forecast_dashboard(mtn)
+        mtn_forecast_dashboard(fcst)
         prompt.select(menu_message) do |menu|
             menu.enum '.'
 
@@ -83,10 +91,10 @@ class Interface
         end
     end
 
-    def mtn_forecast_dashboard(mtn)
-        rows = [[mtn.name, mtn.state]]
-        headings = ["Mountain", "State"]
-        table = create_display_table("#{mtn.name} Forecast", headings, rows)
+    def mtn_forecast_dashboard(fcst)
+        rows = [populate_fcst(fcst)]
+        headings = default_table_headings
+        table = create_display_table("#{fcst.mountain.name} Forecast", headings, rows)
         table.style = default_table_style
         table.align_column(0, :left)
         puts table
@@ -107,7 +115,7 @@ class Interface
         Mountain.execute_search
     end
 
-# Trips menu methods
+# Trips menu
     def my_trips
         system 'clear'
         trip_dashboard_table
@@ -141,7 +149,7 @@ class Interface
         my_trips
     end
 
-# Favorites menu methods
+# Favorites menu
     def my_favorites
         system 'clear'
         favorites_dashboard
@@ -156,12 +164,16 @@ class Interface
     end
 
     def favorites_dashboard
-        rows = user.mountains.reload.map {|mtn| [mtn.name, mtn.state]}
-        headings = ["Mountain", "State"]
+        rows = user_fav_fcsts.map {|fcst| populate_fcst(fcst)}
+        headings = default_table_headings
         table = create_display_table("My Favorites", headings, rows)
         table.style = default_table_style
         table.align_column(0, :left)
         puts table
+    end
+
+    def user_fav_fcsts
+        user.mountains.reload.map {|mountain| mountain.forecast}
     end
 
     def add_favorite
@@ -175,7 +187,7 @@ class Interface
         my_favorites
     end
 
-# Account settings menu methods
+# Account settings menu
     def account_settings
         system 'clear'
         settings_dashboard
@@ -192,12 +204,20 @@ class Interface
     end
 
     def settings_dashboard
-        rows = [[user.username, user.skier_type.capitalize!, user.hometown, user.age]]
-        headings = ["Username", "Two Planks or One?", "Hometown", "Age"]
+        rows = [display_account_array]
+        headings = display_account_headings
         title = ["Account Settings"]
         table = Terminal::Table.new :title=>"Account Settings", :headings=>headings, :rows=>rows
         table.style = {:alignment => :center, :padding_left => 2, :border_i => "x", :width => 100}
         puts table
+    end
+
+    def display_account_headings
+        User.display_account_headings
+    end
+
+    def display_account_array
+        user.display_account_array
     end
 
     def edit_username
@@ -223,7 +243,7 @@ class Interface
         if response
             user_destroy
             system 'clear'
-            puts "Sorry to see you go!"
+            Art.account_destroyed_msg
             sleep(2)
             return
         end

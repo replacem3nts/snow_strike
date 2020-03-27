@@ -24,13 +24,11 @@ class User < ActiveRecord::Base
     end
 
     def self.log_user_in
-        system 'clear'
         username = username_check(0)
         self.find_username(username)
     end
 
     def self.register_user
-        system 'clear'
         user_details = @@prompt.collect do
             key(:skier_type).ask('Do you ski, snowboard, or both?', required: true)
             key(:hometown).ask("What's your hometown?", required: true)
@@ -43,8 +41,7 @@ class User < ActiveRecord::Base
 
 # Populates mountains for the main menu dashboard from favorites + remaining best to equal 5 total 
     def my_mtn_list
-        fav_mtns = []
-        fav_mtns << self.mountains
+        fav_mtns = mountains.reload.map {|mountain| mountain.forecast}
         fav_mtns << five_mtns_by_snow
         fav_mtns.flatten.uniq[0..4]
     end
@@ -95,7 +92,7 @@ class User < ActiveRecord::Base
         trip_to_edit = @@prompt.select("Which trip would you like to change?", list_of_trips)
 
         details = {"Name"=>:name, "Start Date"=>:start_date, "End Date"=>:end_date, "Mountain"=>:mountain}
-        details_to_edit = prompt.multi_select("Which parts of the trip would you like to change?", details)
+        details_to_edit = @@prompt.multi_select("Which parts of the trip would you like to change?", details)
         
         new_mtn = edit_mtn(details_to_edit) if details_to_edit.include?(:mountain)
 
@@ -107,7 +104,7 @@ class User < ActiveRecord::Base
     end
 
     def list_of_trips
-        trips.map {|trip| {trip.name => trip.id}}
+        trips.reload.map {|trip| {trip.name => trip.id}}
     end
 
     def delete_trip
@@ -118,23 +115,31 @@ class User < ActiveRecord::Base
 
 # Favorites menu functions below
 def add_favorite(mtn=nil)
-    if self.favorites.count > 4
+    if favorites.count > 4
         puts "Sorry, you already have 5 favorites, please remove one first."
         remove_favorite
         puts "Okay, let's add that mountain!"
     end
 
     !mtn ? new_fav = mtn_search : new_fav = mtn 
-    self.mountains.include?(new_fav) ? (puts "Sorry that's already a favorite") : create_fav(new_fav)
+    mountains.include?(new_fav) ? (puts "Sorry that's already a favorite") : create_fav(new_fav)
 end
 
 def remove_favorite
-    fav_list = self.favorites.map {|favorite| {favorite.mountain.name => favorite.id} }
+    fav_list = favorites.reload.map {|favorite| {favorite.mountain.name => favorite.id} }
     faves_to_remove = @@prompt.multi_select("Which mountain would you like to remove?", fav_list)
     destroy_array_of_faves(faves_to_remove)
 end
 
 # Account settings functions below
+    def self.display_account_headings
+        ["Username", "Two Planks or One?", "Hometown", "Age"]
+    end
+
+    def display_account_array
+        [username, skier_type.capitalize, hometown, age]
+    end
+
     def edit_username
         new_name = @@prompt.ask("What do you want to change your username to?")
         
@@ -142,28 +147,28 @@ end
             (puts "Sorry that username is taken.")
             new_name = @@prompt.ask("What do you want to change your username to?")
         end
-        self.update(username: new_name)
+        update(username: new_name)
     end
 
     def edit_hometown
         new_home = @@prompt.ask("What's your new hometown?")
-        self.update(hometown: new_home)
+        update(hometown: new_home)
     end
 
     def edit_age
         new_age = @@prompt.ask("How old are you now?")
-        self.update(age: new_age)
+        update(age: new_age)
     end
     
     private
 
     def self.delete_account(account)
-        self.destroy(account.id)
+        destroy(account.id)
     end
 
 #Links to other classes
     def five_mtns_by_snow
-        Mountain.five_by_snow
+        Forecast.five_by_snow
     end
 
     def mtn_search
