@@ -1,10 +1,4 @@
 class DataQuery
-
-    # http://api.weatherstack.com/historical
-    # ? access_key = YOUR_ACCESS_KEY
-    # & query = New York
-    # & historical_date_start = 2015-01-21
-    # & historical_date_end = 2015-01-25
     def self.curr_yr_dates
         [["2019-11-28", "2020-01-17"], ["2020-01-18", "2020-03-08"], ["2020-03-09", "2020-03-25"]]
     end
@@ -44,17 +38,32 @@ class DataQuery
         JSON.parse(response.body)
     end
 
-
-    def self.get_dates
-        dates = []
-        today = Date.today
-        dates << today
-        i = 1
-        while i < 8 do
-            dates << (today + i)
-            i += 1
-        end
-        dates.map {|date| date.strftime("%Y-%m-%d")}
-    end
-
 end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# def self.get_dates
+#     dates = []
+#     today = Date.today
+#     dates << today
+#     i = 1
+#     while i < 8 do
+#         dates << (today + i)
+#         i += 1
+#     end
+#     dates.map {|date| date.strftime("%Y-%m-%d")}
+# end
